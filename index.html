@@ -62,12 +62,45 @@
   details summary { cursor: pointer; color: var(--link); }
   details ol { padding-left: 18px; margin: 6px 0 0; }
   .err { color: var(--danger); font-size: 13px; margin-top: 6px; }
+  .plan { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .badge { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 99px;
+    background: color-mix(in srgb, var(--hint) 18%, transparent); color: var(--text); }
+  .badge.pro { background: linear-gradient(90deg, #ffb800, #ff7a00); color: #fff; }
+  .meter { font-size: 13px; color: var(--hint); margin-top: 4px; }
+  .pro-card { border: 1.5px solid #ffb800; }
+  .pro-card h2 { font-size: 17px; margin: 0 0 6px; }
+  .pro-card ul { margin: 6px 0 4px; padding-left: 18px; font-size: 14px; }
+  .pro-card li { margin: 3px 0; }
+  .pro-btn { background: linear-gradient(90deg, #ffb800, #ff7a00) !important; color: #fff !important; }
+  .locked { font-size: 13px; color: var(--hint); margin-top: 8px; }
+  .locked a { color: var(--link); cursor: pointer; }
+  .soon { font-size: 13px; color: var(--hint); }
+  .ok-msg { color: var(--ok); font-weight: 600; margin-top: 8px; }
 </style>
 </head>
 <body>
 <main>
   <h1>Аккаунты</h1>
-  <p class="sub">Подключай сколько угодно аккаунтов на каждой площадке.</p>
+  <p class="sub">Подключай свои аккаунты — бот будет собирать по ним статистику.</p>
+
+  <section class="card" id="plan-card">
+    <div class="plan">
+      <div>
+        <div class="name">Твой тариф</div>
+        <div class="meter" id="plan-meter"></div>
+      </div>
+      <span class="badge" id="plan-badge">Free</span>
+    </div>
+  </section>
+
+  <section class="card pro-card" id="pro-card" style="display:none">
+    <h2>⭐ Pro</h2>
+    <div class="state" id="pro-price"></div>
+    <ul id="pro-list"></ul>
+    <button class="main pro-btn" id="pro-btn" type="button">Оформить Pro</button>
+    <div class="hint">Подписка продлевается раз в 30 дней, отменить можно в любой момент в Telegram.</div>
+    <div class="ok-msg" id="pro-ok" style="display:none">Оплачено! Pro активирован 🎉</div>
+  </section>
 
   <section class="card tt" data-p="tiktok">
     <div class="head">
@@ -80,7 +113,6 @@
       <input id="tt-nick" placeholder="nickname или ссылка на профиль" autocomplete="off" autocapitalize="off" spellcheck="false">
       <div class="err" id="tt-err"></div>
       <button class="main" id="tt-btn" type="button">Подключить</button>
-      <div class="hint">Каждый TikTok-аккаунт — около 60 проверок в месяц из бесплатных 300.</div>
     </div>
   </section>
 
@@ -113,6 +145,7 @@
       <div><div class="name">YouTube</div><div class="state"></div></div>
     </div>
     <ul class="list"></ul>
+    <div class="soon" id="yt-soon" style="display:none">Подключение YouTube скоро будет доступно.</div>
     <button class="add" type="button">+ Добавить канал</button>
     <div class="form">
       <button class="main" id="yt-btn" type="button">Войти через Google</button>
@@ -147,7 +180,46 @@
     else if (confirm(text)) fn();
   }
 
-  document.querySelectorAll(".card").forEach(card => {
+  // ---- тариф ----
+  const plan = state.plan || { t: "Free", pro: false, acc: 1, chk: 5, left: 5, price: 300,
+                               pro_acc: 10, pro_chk: 50 };
+  const badge = document.getElementById("plan-badge");
+  badge.textContent = plan.t;
+  if (plan.pro) badge.classList.add("pro");
+  const meter = [];
+  if (plan.chk != null) meter.push("проверок ников сегодня: " + plan.left + " из " + plan.chk);
+  else meter.push("проверки без лимита");
+  meter.push(plan.acc != null ? "до " + plan.acc + " акк. на площадку" : "аккаунты без лимита");
+  if (plan.until) meter.push("Pro до " + plan.until);
+  document.getElementById("plan-meter").textContent = meter.join(" · ");
+
+  function scrollToPro() {
+    const el = document.getElementById("pro-card");
+    if (el.style.display !== "none") el.scrollIntoView({ behavior: "smooth" });
+  }
+
+  if (!plan.pro && state.pay) {
+    document.getElementById("pro-card").style.display = "";
+    document.getElementById("pro-price").textContent = plan.price + " ⭐ в месяц";
+    const ul = document.getElementById("pro-list");
+    [plan.pro_chk + " проверок TikTok-ников в день (вместо " + plan.free_chk + ")",
+     "до " + plan.pro_acc + " своих аккаунтов на каждой площадке (вместо " + plan.free_acc + ")",
+     "тень, похожий контент и графики — по всем аккаунтам"].forEach(t => {
+      const li = document.createElement("li"); li.textContent = t; ul.appendChild(li);
+    });
+    document.getElementById("pro-btn").textContent = "Оформить Pro — " + plan.price + " ⭐";
+    document.getElementById("pro-btn").onclick = () => {
+      if (!tg || !tg.openInvoice) { location.href = state.pay; return; }
+      tg.openInvoice(state.pay, status => {
+        if (status === "paid") {
+          document.getElementById("pro-ok").style.display = "";
+          setTimeout(() => tg.close(), 1500);
+        }
+      });
+    };
+  }
+
+  document.querySelectorAll(".card[data-p]").forEach(card => {
     const items = state[card.dataset.p] || [];
     const list = card.querySelector(".list");
     const stateEl = card.querySelector(".state");
@@ -169,6 +241,30 @@
     });
     const form = card.querySelector(".form");
     const addBtn = card.querySelector(".add");
+
+    // YouTube для всех откроется после проверки приложения в Google
+    if (card.dataset.p === "youtube" && state.yt_on === false) {
+      addBtn.style.display = "none";
+      document.getElementById("yt-soon").style.display = "";
+      return;
+    }
+    // лимит тарифа на число аккаунтов
+    if (plan.acc != null && items.length >= plan.acc) {
+      addBtn.style.display = "none";
+      const lock = document.createElement("div");
+      lock.className = "locked";
+      if (plan.pro) {
+        lock.textContent = "Достигнут лимит тарифа: " + plan.acc + " акк. на площадку.";
+      } else {
+        lock.innerHTML = "На Free — " + plan.acc + " аккаунт на площадку. ";
+        const a = document.createElement("a");
+        a.textContent = "Больше — в Pro ⭐";
+        a.onclick = scrollToPro;
+        lock.appendChild(a);
+      }
+      card.appendChild(lock);
+      return;
+    }
     if (!items.length) { form.classList.add("open"); addBtn.style.display = "none"; }
     addBtn.onclick = () => { form.classList.add("open"); addBtn.style.display = "none"; };
   });
