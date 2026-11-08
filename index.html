@@ -14,6 +14,7 @@
     --link: var(--tg-theme-link-color, #2481cc);
     --btn: var(--tg-theme-button-color, #2481cc);
     --btn-text: var(--tg-theme-button-text-color, #ffffff);
+    --danger: #ff3b30;
     --ok: #34c759;
     --radius: 14px;
   }
@@ -24,7 +25,7 @@
   h1 { font-size: 22px; margin: 4px 4px 2px; }
   .sub { color: var(--hint); margin: 0 4px 16px; font-size: 14px; }
   .card { background: var(--bg); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
-  .head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
   .icon { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center;
     font-size: 22px; flex: none; }
   .tt .icon { background: #000; }
@@ -32,65 +33,91 @@
   .yt .icon { background: #ff0000; }
   .name { font-weight: 600; font-size: 16px; }
   .state { font-size: 13px; color: var(--hint); }
-  .state.on { color: var(--ok); }
+  .list { margin: 0 0 6px; padding: 0; list-style: none; }
+  .list li { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 9px 0; border-top: 1px solid color-mix(in srgb, var(--hint) 20%, transparent); }
+  .list li:first-child { border-top: 0; }
+  .acc { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .acc span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; }
+  .del { width: auto; margin: 0; padding: 6px 10px; background: transparent; color: var(--danger);
+    font-weight: 500; font-size: 14px; }
+  .add { width: 100%; margin-top: 6px; padding: 10px; border-radius: 10px; border: 1px dashed
+    color-mix(in srgb, var(--btn) 60%, transparent); background: transparent; color: var(--btn);
+    font: inherit; font-weight: 600; cursor: pointer; }
+  .form { display: none; margin-top: 10px; }
+  .form.open { display: block; }
   input, textarea { width: 100%; border: 1px solid color-mix(in srgb, var(--hint) 35%, transparent);
     background: var(--bg2); color: var(--text); border-radius: 10px; padding: 11px 12px;
     font: inherit; outline: none; }
   textarea { min-height: 72px; resize: vertical; font-family: ui-monospace, Menlo, Consolas, monospace;
     font-size: 12px; word-break: break-all; }
   input:focus, textarea:focus { border-color: var(--btn); }
-  button { width: 100%; margin-top: 10px; border: 0; border-radius: 10px; padding: 12px;
+  button.main { width: 100%; margin-top: 10px; border: 0; border-radius: 10px; padding: 12px;
     background: var(--btn); color: var(--btn-text); font: inherit; font-weight: 600; cursor: pointer; }
-  button:disabled { opacity: .45; }
+  button { cursor: pointer; border: 0; }
   .hint { color: var(--hint); font-size: 13px; margin-top: 8px; }
-  .hint a { color: var(--link); }
+  .hint a, details a { color: var(--link); }
   details { margin-top: 8px; color: var(--hint); font-size: 13px; }
   details summary { cursor: pointer; color: var(--link); }
   details ol { padding-left: 18px; margin: 6px 0 0; }
-  .err { color: #ff3b30; font-size: 13px; margin-top: 6px; min-height: 0; }
+  .err { color: var(--danger); font-size: 13px; margin-top: 6px; }
 </style>
 </head>
 <body>
 <main>
   <h1>Аккаунты</h1>
-  <p class="sub">Подключи площадки — бот будет собирать по ним статистику.</p>
+  <p class="sub">Подключай сколько угодно аккаунтов на каждой площадке.</p>
 
-  <section class="card tt">
+  <section class="card tt" data-p="tiktok">
     <div class="head">
       <div class="icon">🎵</div>
-      <div><div class="name">TikTok</div><div class="state" id="tt-state">не подключён</div></div>
+      <div><div class="name">TikTok</div><div class="state"></div></div>
     </div>
-    <input id="tt-nick" placeholder="nickname или ссылка на профиль" autocomplete="off" autocapitalize="off" spellcheck="false">
-    <div class="err" id="tt-err"></div>
-    <button id="tt-btn">Подключить</button>
+    <ul class="list"></ul>
+    <button class="add" type="button">+ Добавить аккаунт</button>
+    <div class="form">
+      <input id="tt-nick" placeholder="nickname или ссылка на профиль" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <div class="err" id="tt-err"></div>
+      <button class="main" id="tt-btn" type="button">Подключить</button>
+      <div class="hint">Каждый TikTok-аккаунт — около 60 проверок в месяц из бесплатных 300.</div>
+    </div>
   </section>
 
-  <section class="card ig">
+  <section class="card ig" data-p="instagram">
     <div class="head">
       <div class="icon">📸</div>
-      <div><div class="name">Instagram</div><div class="state" id="ig-state">не подключён</div></div>
+      <div><div class="name">Instagram</div><div class="state"></div></div>
     </div>
-    <textarea id="ig-token" placeholder="Вставь токен доступа" autocomplete="off" spellcheck="false"></textarea>
-    <div class="err" id="ig-err"></div>
-    <button id="ig-btn">Подключить</button>
-    <details>
-      <summary>Где взять токен?</summary>
-      <ol>
-        <li>Аккаунт Instagram — «Профессиональный» (Автор или Бизнес).</li>
-        <li>Открой <a href="https://developers.facebook.com/apps" target="_blank">developers.facebook.com/apps</a> → создай приложение с «Instagram API».</li>
-        <li>Instagram → «API setup with Instagram login» → добавь свой аккаунт.</li>
-        <li>Нажми «Generate token», скопируй и вставь сюда.</li>
-      </ol>
-    </details>
+    <ul class="list"></ul>
+    <button class="add" type="button">+ Добавить аккаунт</button>
+    <div class="form">
+      <textarea id="ig-token" placeholder="Вставь токен доступа" autocomplete="off" spellcheck="false"></textarea>
+      <div class="err" id="ig-err"></div>
+      <button class="main" id="ig-btn" type="button">Подключить</button>
+      <details>
+        <summary>Где взять токен?</summary>
+        <ol>
+          <li>Аккаунт Instagram — «Профессиональный» (Автор или Бизнес).</li>
+          <li>Открой <a href="https://developers.facebook.com/apps" target="_blank">developers.facebook.com/apps</a> → создай приложение с «Instagram API».</li>
+          <li>Instagram → «API setup with Instagram login» → добавь аккаунт.</li>
+          <li>Нажми «Generate token», скопируй и вставь сюда.</li>
+        </ol>
+      </details>
+    </div>
   </section>
 
-  <section class="card yt">
+  <section class="card yt" data-p="youtube">
     <div class="head">
       <div class="icon">▶️</div>
-      <div><div class="name">YouTube</div><div class="state" id="yt-state">не подключён</div></div>
+      <div><div class="name">YouTube</div><div class="state"></div></div>
     </div>
-    <button id="yt-btn">Войти через Google</button>
-    <div class="hint">Бот пришлёт код и ссылку — открой её, войди в аккаунт с каналом и введи код.</div>
+    <ul class="list"></ul>
+    <button class="add" type="button">+ Добавить канал</button>
+    <div class="form">
+      <button class="main" id="yt-btn" type="button">Войти через Google</button>
+      <div class="hint">Бот пришлёт код и ссылку — открой её, войди в аккаунт с нужным каналом и введи код.</div>
+    </div>
   </section>
 </main>
 
@@ -98,23 +125,53 @@
   const tg = window.Telegram && window.Telegram.WebApp;
   if (tg) { tg.ready(); tg.expand(); }
 
-  // Текущее состояние бот передаёт в адресе: ?tt=nick&ig=user&yt=channel
-  const q = new URLSearchParams(location.search);
-  function setState(id, value, prefix) {
-    const el = document.getElementById(id);
-    if (value) { el.textContent = "✓ подключён: " + (prefix || "") + value; el.classList.add("on"); }
+  // Подключённые аккаунты бот передаёт в адресе: ?s=<base64 JSON {youtube:[{k,n}], tiktok:[…], instagram:[…]}>
+  function readState() {
+    const s = new URLSearchParams(location.search).get("s");
+    if (!s) return {};
+    try {
+      const b64 = s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4);
+      const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+      return JSON.parse(new TextDecoder().decode(bytes));
+    } catch (e) { return {}; }
   }
-  setState("tt-state", q.get("tt"), "@");
-  setState("ig-state", q.get("ig"), "@");
-  setState("yt-state", q.get("yt"));
-  if (q.get("tt")) document.getElementById("tt-btn").textContent = "Сменить аккаунт";
-  if (q.get("ig")) document.getElementById("ig-btn").textContent = "Обновить токен";
-  if (q.get("yt")) document.getElementById("yt-btn").textContent = "Войти заново";
+  const state = readState();
 
   function send(payload) {
     if (!tg || !tg.sendData) { alert("Открой это окно кнопкой «🔗 Аккаунты» в боте."); return; }
     tg.sendData(JSON.stringify(payload));   // окно закроется, бот получит данные
   }
+
+  function confirmThen(text, fn) {
+    if (tg && tg.showConfirm) tg.showConfirm(text, ok => ok && fn());
+    else if (confirm(text)) fn();
+  }
+
+  document.querySelectorAll(".card").forEach(card => {
+    const items = state[card.dataset.p] || [];
+    const list = card.querySelector(".list");
+    const stateEl = card.querySelector(".state");
+    stateEl.textContent = items.length ? "подключено: " + items.length : "не подключено";
+    items.forEach(a => {
+      const li = document.createElement("li");
+      const acc = document.createElement("div");
+      acc.className = "acc";
+      acc.innerHTML = '<i class="dot"></i>';
+      const name = document.createElement("span");
+      name.textContent = a.n;
+      acc.appendChild(name);
+      const del = document.createElement("button");
+      del.className = "del"; del.type = "button"; del.textContent = "Отключить";
+      del.onclick = () => confirmThen("Отключить " + a.n + "? Прошлая статистика сохранится.",
+                                      () => send({ a: "del", k: a.k }));
+      li.append(acc, del);
+      list.appendChild(li);
+    });
+    const form = card.querySelector(".form");
+    const addBtn = card.querySelector(".add");
+    if (!items.length) { form.classList.add("open"); addBtn.style.display = "none"; }
+    addBtn.onclick = () => { form.classList.add("open"); addBtn.style.display = "none"; };
+  });
 
   function parseNick(text) {
     text = text.trim();
@@ -128,6 +185,7 @@
     const nick = parseNick(document.getElementById("tt-nick").value);
     const err = document.getElementById("tt-err");
     if (!nick) { err.textContent = "Похоже, это не ник TikTok"; return; }
+    if ((state.tiktok || []).some(a => a.k === "tiktok:" + nick)) { err.textContent = "Этот аккаунт уже подключён"; return; }
     err.textContent = "";
     send({ a: "tt", nick });
   };
