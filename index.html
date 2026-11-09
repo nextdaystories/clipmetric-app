@@ -2,272 +2,337 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>ClipMetric · Аккаунты</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ClipMetric</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root {
-    --bg: var(--tg-theme-bg-color, #ffffff);
-    --bg2: var(--tg-theme-secondary-bg-color, #f2f2f7);
-    --text: var(--tg-theme-text-color, #111111);
-    --hint: var(--tg-theme-hint-color, #8e8e93);
-    --link: var(--tg-theme-link-color, #2481cc);
-    --btn: var(--tg-theme-button-color, #2481cc);
-    --btn-text: var(--tg-theme-button-text-color, #ffffff);
-    --danger: #ff3b30;
-    --ok: #34c759;
-    --radius: 14px;
+    --bg: var(--tg-theme-secondary-bg-color, #f1f2f6);
+    --card: var(--tg-theme-section-bg-color, var(--tg-theme-bg-color, #ffffff));
+    --text: var(--tg-theme-text-color, #0f1115);
+    --hint: var(--tg-theme-hint-color, #8a8f98);
+    --link: var(--tg-theme-link-color, #2f7cf6);
+    --accent: var(--tg-theme-button-color, #2f7cf6);
+    --accent-text: var(--tg-theme-button-text-color, #ffffff);
+    --line: color-mix(in srgb, var(--hint) 18%, transparent);
+    --soft: color-mix(in srgb, var(--hint) 10%, transparent);
+    --danger: #ff453a;
+    --up: #22b45e;
+    --gold1: #ffbf1f; --gold2: #ff7a1a;
+    --r: 18px;
   }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; background: var(--bg2); color: var(--text);
-    font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 520px; margin: 0 auto; padding: 16px 16px 32px; }
-  h1 { font-size: 22px; margin: 4px 4px 2px; }
-  .sub { color: var(--hint); margin: 0 4px 16px; font-size: 14px; }
-  .card { background: var(--bg); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
-  .head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-  .icon { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center;
-    font-size: 22px; flex: none; }
-  .tt .icon { background: #000; }
-  .ig .icon { background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); }
-  .yt .icon { background: #ff0000; }
-  .name { font-weight: 600; font-size: 16px; }
-  .state { font-size: 13px; color: var(--hint); }
-  .list { margin: 0 0 6px; padding: 0; list-style: none; }
-  .list li { display: flex; align-items: center; justify-content: space-between; gap: 8px;
-    padding: 9px 0; border-top: 1px solid color-mix(in srgb, var(--hint) 20%, transparent); }
-  .list li:first-child { border-top: 0; }
-  .acc { display: flex; align-items: center; gap: 8px; min-width: 0; }
-  .acc span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; }
-  .del { width: auto; margin: 0; padding: 6px 10px; background: transparent; color: var(--danger);
-    font-weight: 500; font-size: 14px; }
-  .add { width: 100%; margin-top: 6px; padding: 10px; border-radius: 10px; border: 1px dashed
-    color-mix(in srgb, var(--btn) 60%, transparent); background: transparent; color: var(--btn);
-    font: inherit; font-weight: 600; cursor: pointer; }
-  .form { display: none; margin-top: 10px; }
-  .form.open { display: block; }
-  input, textarea { width: 100%; border: 1px solid color-mix(in srgb, var(--hint) 35%, transparent);
-    background: var(--bg2); color: var(--text); border-radius: 10px; padding: 11px 12px;
-    font: inherit; outline: none; }
-  textarea { min-height: 72px; resize: vertical; font-family: ui-monospace, Menlo, Consolas, monospace;
-    font-size: 12px; word-break: break-all; }
-  input:focus, textarea:focus { border-color: var(--btn); }
-  button.main { width: 100%; margin-top: 10px; border: 0; border-radius: 10px; padding: 12px;
-    background: var(--btn); color: var(--btn-text); font: inherit; font-weight: 600; cursor: pointer; }
-  button { cursor: pointer; border: 0; }
-  .hint { color: var(--hint); font-size: 13px; margin-top: 8px; }
-  .hint a, details a { color: var(--link); }
-  details { margin-top: 8px; color: var(--hint); font-size: 13px; }
-  details summary { cursor: pointer; color: var(--link); }
-  details ol { padding-left: 18px; margin: 6px 0 0; }
-  .err { color: var(--danger); font-size: 13px; margin-top: 6px; }
-  .plan { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  .badge { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 99px;
-    background: color-mix(in srgb, var(--hint) 18%, transparent); color: var(--text); }
-  .badge.pro { background: linear-gradient(90deg, #ffb800, #ff7a00); color: #fff; }
-  .meter { font-size: 13px; color: var(--hint); margin-top: 4px; }
-  .pro-card { border: 1.5px solid #ffb800; }
-  .pro-card h2 { font-size: 17px; margin: 0 0 6px; }
-  .pro-card ul { margin: 6px 0 4px; padding-left: 18px; font-size: 14px; }
-  .pro-card li { margin: 3px 0; }
-  .pro-btn { background: linear-gradient(90deg, #ffb800, #ff7a00) !important; color: #fff !important; }
-  .locked { font-size: 13px; color: var(--hint); margin-top: 8px; }
-  .locked a { color: var(--link); cursor: pointer; }
-  .soon { font-size: 13px; color: var(--hint); }
-  .ok-msg { color: var(--ok); font-weight: 600; margin-top: 8px; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; }
+  body { padding-bottom: env(safe-area-inset-bottom); }
+  main { max-width: 540px; margin: 0 auto; padding: 14px 16px 40px; }
+  button { font: inherit; cursor: pointer; border: 0; background: none; color: inherit; padding: 0; }
+
+  /* шапка */
+  .top { display: flex; align-items: center; justify-content: space-between; margin: 2px 2px 14px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: -.2px; }
+  .logo { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
+    background: linear-gradient(135deg, #5b8cff, #a35bff); }
+  .badge { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 99px;
+    background: var(--soft); color: var(--hint); }
+  .badge.pro { background: linear-gradient(90deg, var(--gold1), var(--gold2)); color: #fff; }
+
+  /* сводка */
+  .hero { background: var(--card); border-radius: var(--r); padding: 16px; margin-bottom: 14px; }
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .kpi .v { font-size: 22px; font-weight: 700; letter-spacing: -.4px; font-variant-numeric: tabular-nums; }
+  .kpi .l { font-size: 12px; color: var(--hint); }
+  .kpi .d { font-size: 12px; color: var(--up); font-weight: 600; }
+  .meter { margin-top: 14px; }
+  .meter-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--hint); margin-bottom: 6px; }
+  .meter-row b { color: var(--text); font-weight: 600; }
+  .bar { height: 6px; border-radius: 99px; background: var(--soft); overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 99px; background: var(--accent); transition: width .4s; }
+
+  /* вкладки */
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--soft); border-radius: 12px;
+    padding: 3px; margin-bottom: 14px; }
+  .tabs button { padding: 8px; border-radius: 9px; font-weight: 600; font-size: 14px; color: var(--hint); }
+  .tabs button.on { background: var(--card); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .page { display: none; } .page.on { display: block; }
+
+  /* площадки */
+  .sec-title { display: flex; align-items: center; gap: 10px; margin: 18px 4px 8px; }
+  .sec-title:first-child { margin-top: 0; }
+  .pi { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; flex: none; }
+  .pi svg { width: 15px; height: 15px; fill: #fff; }
+  .p-tiktok .pi { background: #111; }
+  .p-instagram .pi { background: linear-gradient(45deg, #f9a12e, #e1306c 55%, #833ab4); }
+  .p-youtube .pi { background: #ff0033; }
+  .sec-title .t { font-weight: 700; font-size: 15px; }
+  .sec-title .c { margin-left: auto; font-size: 13px; color: var(--hint); }
+  .group { background: var(--card); border-radius: var(--r); overflow: hidden; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+  .row + .row { border-top: 1px solid var(--line); }
+  .ava { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; flex: none;
+    font-weight: 700; color: #fff; font-size: 16px; text-transform: uppercase; }
+  .info { min-width: 0; flex: 1; }
+  .nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .meta { font-size: 13px; color: var(--hint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .meta .up { color: var(--up); font-weight: 600; }
+  .more { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: var(--hint); flex: none; }
+  .more:active { background: var(--soft); }
+  .add-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; width: 100%;
+    color: var(--accent); font-weight: 600; text-align: left; }
+  .row + .add-row, .row + .note { border-top: 1px solid var(--line); }
+  .plus { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+    background: color-mix(in srgb, var(--accent) 12%, transparent); font-size: 22px; font-weight: 400; flex: none; }
+  .note { padding: 12px 14px; font-size: 13px; color: var(--hint); }
+  .note a { color: var(--link); cursor: pointer; font-weight: 600; }
+  .foot { text-align: center; color: var(--hint); font-size: 12px; margin-top: 18px; }
+
+  /* тариф */
+  .plan-card { background: var(--card); border-radius: var(--r); padding: 18px; margin-bottom: 12px; position: relative; }
+  .plan-card.pro { border: 1.5px solid var(--gold1); }
+  .plan-card h3 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+  .price { font-size: 26px; font-weight: 800; margin: 8px 0 2px; letter-spacing: -.5px; }
+  .price small { font-size: 14px; font-weight: 500; color: var(--hint); }
+  .cur { position: absolute; top: 16px; right: 16px; font-size: 12px; font-weight: 700; color: var(--hint);
+    background: var(--soft); padding: 3px 9px; border-radius: 99px; }
+  .feat { list-style: none; padding: 0; margin: 12px 0 0; }
+  .feat li { display: flex; gap: 10px; padding: 6px 0; font-size: 14px; }
+  .feat li::before { content: "✓"; color: var(--up); font-weight: 800; }
+  .feat li.off { color: var(--hint); } .feat li.off::before { content: "—"; color: var(--hint); }
+  .btn { width: 100%; margin-top: 14px; border-radius: 12px; padding: 13px; font-weight: 700;
+    background: var(--accent); color: var(--accent-text); }
+  .btn.gold { background: linear-gradient(90deg, var(--gold1), var(--gold2)); color: #fff; }
+  .btn:active { opacity: .85; }
+  .small { color: var(--hint); font-size: 12px; margin-top: 10px; text-align: center; }
+  .ok { color: var(--up); font-weight: 700; text-align: center; margin-top: 10px; }
+
+  /* нижняя шторка */
+  .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.4); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 10; }
+  .scrim.on { opacity: 1; pointer-events: auto; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 11; background: var(--card);
+    border-radius: 20px 20px 0 0; padding: 10px 18px calc(22px + env(safe-area-inset-bottom));
+    transform: translateY(105%); transition: transform .25s cubic-bezier(.2,.8,.2,1); max-width: 540px; margin: 0 auto; }
+  .sheet.on { transform: none; }
+  .grab { width: 38px; height: 5px; border-radius: 99px; background: var(--line); margin: 0 auto 14px; }
+  .sheet h4 { margin: 0 0 4px; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+  .sheet p { margin: 0 0 14px; color: var(--hint); font-size: 14px; }
+  input, textarea { width: 100%; border: 1.5px solid var(--line); background: var(--bg); color: var(--text);
+    border-radius: 12px; padding: 12px 14px; font: inherit; outline: none; }
+  textarea { min-height: 84px; resize: none; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; word-break: break-all; }
+  input:focus, textarea:focus { border-color: var(--accent); }
+  .err { color: var(--danger); font-size: 13px; min-height: 18px; margin-top: 6px; }
+  details { margin-top: 12px; font-size: 13px; color: var(--hint); }
+  summary { color: var(--link); cursor: pointer; font-weight: 600; }
+  details ol { padding-left: 18px; margin: 8px 0 0; } details li { margin: 4px 0; } details a { color: var(--link); }
 </style>
 </head>
 <body>
 <main>
-  <h1>Аккаунты</h1>
-  <p class="sub">Подключай свои аккаунты — бот будет собирать по ним статистику.</p>
+  <div class="top">
+    <div class="brand">
+      <div class="logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><rect x="3" y="12" width="4" height="9" rx="1.5"/><rect x="10" y="7" width="4" height="14" rx="1.5"/><rect x="17" y="3" width="4" height="18" rx="1.5"/></svg></div>
+      ClipMetric
+    </div>
+    <span class="badge" id="badge">Free</span>
+  </div>
 
-  <section class="card" id="plan-card">
-    <div class="plan">
-      <div>
-        <div class="name">Твой тариф</div>
-        <div class="meter" id="plan-meter"></div>
-      </div>
-      <span class="badge" id="plan-badge">Free</span>
+  <section class="hero">
+    <div class="kpis">
+      <div class="kpi"><div class="v" id="k-acc">0</div><div class="l">аккаунтов</div></div>
+      <div class="kpi"><div class="v" id="k-fol">—</div><div class="l">подписчиков</div><div class="d" id="k-fol-d"></div></div>
+      <div class="kpi"><div class="v" id="k-views">—</div><div class="l">просмотров</div></div>
+    </div>
+    <div class="meter" id="meter">
+      <div class="meter-row"><span>Проверки ников сегодня</span><span id="m-txt"></span></div>
+      <div class="bar"><i id="m-bar" style="width:0"></i></div>
     </div>
   </section>
 
-  <section class="card pro-card" id="pro-card" style="display:none">
-    <h2>⭐ Pro</h2>
-    <div class="state" id="pro-price"></div>
-    <ul id="pro-list"></ul>
-    <button class="main pro-btn" id="pro-btn" type="button">Оформить Pro</button>
-    <div class="hint">Подписка продлевается раз в 30 дней, отменить можно в любой момент в Telegram.</div>
-    <div class="ok-msg" id="pro-ok" style="display:none">Оплачено! Pro активирован 🎉</div>
-  </section>
+  <nav class="tabs">
+    <button type="button" class="on" data-tab="acc">Аккаунты</button>
+    <button type="button" data-tab="plan">Тариф</button>
+  </nav>
 
-  <section class="card tt" data-p="tiktok">
-    <div class="head">
-      <div class="icon">🎵</div>
-      <div><div class="name">TikTok</div><div class="state"></div></div>
-    </div>
-    <ul class="list"></ul>
-    <button class="add" type="button">+ Добавить аккаунт</button>
-    <div class="form">
-      <input id="tt-nick" placeholder="nickname или ссылка на профиль" autocomplete="off" autocapitalize="off" spellcheck="false">
-      <div class="err" id="tt-err"></div>
-      <button class="main" id="tt-btn" type="button">Подключить</button>
-    </div>
-  </section>
+  <div class="page on" id="page-acc"></div>
 
-  <section class="card ig" data-p="instagram">
-    <div class="head">
-      <div class="icon">📸</div>
-      <div><div class="name">Instagram</div><div class="state"></div></div>
+  <div class="page" id="page-plan">
+    <div class="plan-card" id="free-card">
+      <span class="cur" id="free-cur">текущий</span>
+      <h3>Free</h3>
+      <div class="price">0 <small>⭐</small></div>
+      <ul class="feat" id="free-feat"></ul>
     </div>
-    <ul class="list"></ul>
-    <button class="add" type="button">+ Добавить аккаунт</button>
-    <div class="form">
-      <textarea id="ig-token" placeholder="Вставь токен доступа" autocomplete="off" spellcheck="false"></textarea>
-      <div class="err" id="ig-err"></div>
-      <button class="main" id="ig-btn" type="button">Подключить</button>
-      <details>
-        <summary>Где взять токен?</summary>
-        <ol>
-          <li>Аккаунт Instagram — «Профессиональный» (Автор или Бизнес).</li>
-          <li>Открой <a href="https://developers.facebook.com/apps" target="_blank">developers.facebook.com/apps</a> → создай приложение с «Instagram API».</li>
-          <li>Instagram → «API setup with Instagram login» → добавь аккаунт.</li>
-          <li>Нажми «Generate token», скопируй и вставь сюда.</li>
-        </ol>
-      </details>
+    <div class="plan-card pro" id="pro-card">
+      <span class="cur" id="pro-cur" style="display:none">текущий</span>
+      <h3>⭐ Pro</h3>
+      <div class="price"><span id="pro-price">300</span> <small>⭐ / 30 дней</small></div>
+      <ul class="feat" id="pro-feat"></ul>
+      <button class="btn gold" id="pro-btn" type="button" style="display:none">Оформить Pro</button>
+      <div class="ok" id="pro-ok" style="display:none">Оплачено! Pro активирован 🎉</div>
+      <div class="small" id="pro-small"></div>
     </div>
-  </section>
+  </div>
 
-  <section class="card yt" data-p="youtube">
-    <div class="head">
-      <div class="icon">▶️</div>
-      <div><div class="name">YouTube</div><div class="state"></div></div>
-    </div>
-    <ul class="list"></ul>
-    <div class="soon" id="yt-soon" style="display:none">Подключение YouTube скоро будет доступно.</div>
-    <button class="add" type="button">+ Добавить канал</button>
-    <div class="form">
-      <button class="main" id="yt-btn" type="button">Войти через Google</button>
-      <div class="hint">Бот пришлёт код и ссылку — открой её, войди в аккаунт с нужным каналом и введи код.</div>
-    </div>
-  </section>
+  <div class="foot" id="foot"></div>
 </main>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+  <div class="grab"></div>
+  <div id="sheet-body"></div>
+</div>
 
 <script>
   const tg = window.Telegram && window.Telegram.WebApp;
-  if (tg) { tg.ready(); tg.expand(); }
+  const haptic = (t) => { try { tg.HapticFeedback.impactOccurred(t || "light"); } catch (e) {} };
+  if (tg) {
+    tg.ready(); tg.expand();
+    try { tg.setHeaderColor("secondary_bg_color"); tg.setBackgroundColor("secondary_bg_color"); } catch (e) {}
+  }
 
-  // Подключённые аккаунты бот передаёт в адресе: ?s=<base64 JSON {youtube:[{k,n}], tiktok:[…], instagram:[…]}>
+  // Бот передаёт данные в адресе: ?s=<base64url JSON>
   function readState() {
     const s = new URLSearchParams(location.search).get("s");
     if (!s) return {};
     try {
       const b64 = s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4);
-      const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-      return JSON.parse(new TextDecoder().decode(bytes));
+      return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(b64), c => c.charCodeAt(0))));
     } catch (e) { return {}; }
   }
   const state = readState();
+  const plan = state.plan || { t: "Free", pro: false, acc: 1, chk: 5, left: 5, price: 300,
+                               free_acc: 1, free_chk: 5, pro_acc: 10, pro_chk: 50 };
 
-  function send(payload) {
-    if (!tg || !tg.sendData) { alert("Открой это окно кнопкой «🔗 Аккаунты» в боте."); return; }
-    tg.sendData(JSON.stringify(payload));   // окно закроется, бот получит данные
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+  function fmt(n) {
+    if (n == null) return "—";
+    const a = Math.abs(n);
+    if (a >= 1e6) return (n / 1e6).toFixed(a >= 1e7 ? 0 : 1).replace(".0", "") + "M";
+    if (a >= 1e4) return (n / 1e3).toFixed(a >= 1e5 ? 0 : 1).replace(".0", "") + "K";
+    return n.toLocaleString("ru-RU");
+  }
+  function plural(n, f) {
+    const m10 = n % 10, m100 = n % 100;
+    return f[m10 === 1 && m100 !== 11 ? 0 : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? 1 : 2];
   }
 
+  function send(payload) {
+    if (!tg || !tg.sendData) { alert("Открой это окно кнопкой «🔗 Аккаунты и Pro» в боте."); return; }
+    haptic("medium");
+    tg.sendData(JSON.stringify(payload));   // окно закроется, бот получит данные
+  }
   function confirmThen(text, fn) {
     if (tg && tg.showConfirm) tg.showConfirm(text, ok => ok && fn());
     else if (confirm(text)) fn();
   }
 
-  // ---- тариф ----
-  const plan = state.plan || { t: "Free", pro: false, acc: 1, chk: 5, left: 5, price: 300,
-                               pro_acc: 10, pro_chk: 50 };
-  const badge = document.getElementById("plan-badge");
-  badge.textContent = plan.t;
-  if (plan.pro) badge.classList.add("pro");
-  const meter = [];
-  if (plan.chk != null) meter.push("проверок ников сегодня: " + plan.left + " из " + plan.chk);
-  else meter.push("проверки без лимита");
-  meter.push(plan.acc != null ? "до " + plan.acc + " акк. на площадку" : "аккаунты без лимита");
-  if (plan.until) meter.push("Pro до " + plan.until);
-  document.getElementById("plan-meter").textContent = meter.join(" · ");
+  const ICON = {
+    tiktok: '<svg viewBox="0 0 24 24"><path d="M16.6 5.8A4.3 4.3 0 0 1 15.5 3h-3.1v12.4a2.6 2.6 0 1 1-2.6-2.6c.3 0 .5 0 .8.1V9.7a5.7 5.7 0 1 0 4.9 5.7V9.1a7.3 7.3 0 0 0 4.3 1.4V7.4a4.3 4.3 0 0 1-3.2-1.6z"/></svg>',
+    instagram: '<svg viewBox="0 0 24 24"><path d="M12 7.3a4.7 4.7 0 1 0 0 9.4 4.7 4.7 0 0 0 0-9.4zm0 7.7a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM17 5.8a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2zM21.9 8c-.1-1.6-.4-3-1.6-4.2S17.6 2.2 16 2.1C14.4 2 9.6 2 8 2.1 6.4 2.2 5 2.5 3.8 3.7S2.2 6.4 2.1 8C2 9.6 2 14.4 2.1 16c.1 1.6.4 3 1.6 4.2s2.6 1.5 4.2 1.6c1.6.1 6.4.1 8 0 1.6-.1 3-.4 4.2-1.6s1.5-2.6 1.6-4.2c.1-1.6.1-6.4 0-8zm-2.1 9.7a3.2 3.2 0 0 1-1.8 1.8c-1.3.5-4.2.4-5.6.4s-4.3.1-5.6-.4a3.2 3.2 0 0 1-1.8-1.8c-.5-1.3-.4-4.2-.4-5.6s-.1-4.3.4-5.6A3.2 3.2 0 0 1 6.4 4.6c1.3-.5 4.2-.4 5.6-.4s4.3-.1 5.6.4a3.2 3.2 0 0 1 1.8 1.8c.5 1.3.4 4.2.4 5.6s.1 4.3-.4 5.6z"/></svg>',
+    youtube: '<svg viewBox="0 0 24 24"><path d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12 31 31 0 0 0 1 16.8a3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8zM9.7 15V9l5.8 3-5.8 3z"/></svg>',
+  };
+  const PLATFORMS = [
+    { p: "tiktok", title: "TikTok", unit: ["подписчик", "подписчика", "подписчиков"], post: ["пост", "поста", "постов"], color: "#25262b" },
+    { p: "instagram", title: "Instagram", unit: ["подписчик", "подписчика", "подписчиков"], post: ["пост", "поста", "постов"], color: "#d6336c" },
+    { p: "youtube", title: "YouTube", unit: ["подписчик", "подписчика", "подписчиков"], post: ["ролик", "ролика", "роликов"], color: "#e03131" },
+  ];
 
-  function scrollToPro() {
-    const el = document.getElementById("pro-card");
-    if (el.style.display !== "none") el.scrollIntoView({ behavior: "smooth" });
+  // ---- шапка и сводка ----
+  $("badge").textContent = plan.t;
+  if (plan.pro) $("badge").classList.add("pro");
+  let nAcc = 0, fol = 0, folD = 0, views = 0, hasFol = false, hasViews = false, lastTs = null;
+  PLATFORMS.forEach(({ p }) => (state[p] || []).forEach(a => {
+    nAcc++;
+    if (a.f != null) { fol += a.f; hasFol = true; }
+    if (a.fd) folD += a.fd;
+    if (a.v != null) { views += a.v; hasViews = true; }
+    if (a.ts && (!lastTs || a.ts > lastTs)) lastTs = a.ts;
+  }));
+  $("k-acc").textContent = nAcc;
+  $("k-fol").textContent = hasFol ? fmt(fol) : "—";
+  if (folD) { $("k-fol-d").textContent = (folD > 0 ? "+" : "−") + fmt(Math.abs(folD)) + " за 24ч"; if (folD < 0) $("k-fol-d").style.color = "var(--danger)"; }
+  $("k-views").textContent = hasViews ? fmt(views) : "—";
+  if (plan.chk != null) {
+    $("m-txt").innerHTML = "<b>" + plan.left + "</b> из " + plan.chk;
+    requestAnimationFrame(() => $("m-bar").style.width = Math.max(0, Math.min(100, plan.left / plan.chk * 100)) + "%");
+  } else {
+    $("m-txt").innerHTML = "<b>без лимита</b>";
+    $("m-bar").style.width = "100%";
   }
+  if (lastTs) $("foot").textContent = "Данные обновлены " + lastTs;
 
-  if (!plan.pro && state.pay) {
-    document.getElementById("pro-card").style.display = "";
-    document.getElementById("pro-price").textContent = plan.price + " ⭐ в месяц";
-    const ul = document.getElementById("pro-list");
-    [plan.pro_chk + " проверок TikTok-ников в день (вместо " + plan.free_chk + ")",
-     "до " + plan.pro_acc + " своих аккаунтов на каждой площадке (вместо " + plan.free_acc + ")",
-     "тень, похожий контент и графики — по всем аккаунтам"].forEach(t => {
-      const li = document.createElement("li"); li.textContent = t; ul.appendChild(li);
-    });
-    document.getElementById("pro-btn").textContent = "Оформить Pro — " + plan.price + " ⭐";
-    document.getElementById("pro-btn").onclick = () => {
-      if (!tg || !tg.openInvoice) { location.href = state.pay; return; }
-      tg.openInvoice(state.pay, status => {
-        if (status === "paid") {
-          document.getElementById("pro-ok").style.display = "";
-          setTimeout(() => tg.close(), 1500);
-        }
-      });
-    };
+  // ---- вкладки ----
+  function openTab(name) {
+    document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === name));
+    $("page-acc").classList.toggle("on", name === "acc");
+    $("page-plan").classList.toggle("on", name === "plan");
   }
+  document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => { haptic(); openTab(b.dataset.tab); });
 
-  document.querySelectorAll(".card[data-p]").forEach(card => {
-    const items = state[card.dataset.p] || [];
-    const list = card.querySelector(".list");
-    const stateEl = card.querySelector(".state");
-    stateEl.textContent = items.length ? "подключено: " + items.length : "не подключено";
+  // ---- аккаунты ----
+  const page = $("page-acc");
+  PLATFORMS.forEach(cfg => {
+    const items = state[cfg.p] || [];
+    const head = el("div", "sec-title p-" + cfg.p);
+    const pi = el("div", "pi"); pi.innerHTML = ICON[cfg.p];
+    const lim = plan.acc != null ? items.length + " / " + plan.acc : String(items.length || "");
+    head.append(pi, el("div", "t", cfg.title), el("div", "c", lim));
+    page.appendChild(head);
+
+    const group = el("div", "group");
     items.forEach(a => {
-      const li = document.createElement("li");
-      const acc = document.createElement("div");
-      acc.className = "acc";
-      acc.innerHTML = '<i class="dot"></i>';
-      const name = document.createElement("span");
-      name.textContent = a.n;
-      acc.appendChild(name);
-      const del = document.createElement("button");
-      del.className = "del"; del.type = "button"; del.textContent = "Отключить";
-      del.onclick = () => confirmThen("Отключить " + a.n + "? Прошлая статистика сохранится.",
-                                      () => send({ a: "del", k: a.k }));
-      li.append(acc, del);
-      list.appendChild(li);
+      const row = el("div", "row");
+      const name = (a.n || "").replace(/^@/, "");
+      const ava = el("div", "ava", name.slice(0, 1) || "?"); ava.style.background = cfg.color;
+      const info = el("div", "info");
+      info.appendChild(el("div", "nm", a.n));
+      const meta = el("div", "meta");
+      const bits = [];
+      if (a.f != null) bits.push(fmt(a.f) + " " + plural(a.f, cfg.unit));
+      if (a.c) bits.push(a.c + " " + plural(a.c, cfg.post));
+      if (a.v != null && a.c) bits.push("👁 " + fmt(a.v));
+      meta.textContent = bits.length ? bits.join(" · ") : "данные появятся после первого сбора";
+      if (a.fd) { const s = el("span", "up", "  " + (a.fd > 0 ? "+" : "−") + fmt(Math.abs(a.fd))); if (a.fd < 0) s.style.color = "var(--danger)"; meta.appendChild(s); }
+      info.appendChild(meta);
+      const more = el("button", "more"); more.type = "button";
+      more.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+      more.setAttribute("aria-label", "Отключить");
+      more.onclick = () => { haptic(); confirmThen("Отключить " + a.n + "? Собранная статистика сохранится.", () => send({ a: "del", k: a.k })); };
+      row.append(ava, info, more);
+      group.appendChild(row);
     });
-    const form = card.querySelector(".form");
-    const addBtn = card.querySelector(".add");
 
-    // YouTube для всех откроется после проверки приложения в Google
-    if (card.dataset.p === "youtube" && state.yt_on === false) {
-      addBtn.style.display = "none";
-      document.getElementById("yt-soon").style.display = "";
-      return;
-    }
-    // лимит тарифа на число аккаунтов
-    if (plan.acc != null && items.length >= plan.acc) {
-      addBtn.style.display = "none";
-      const lock = document.createElement("div");
-      lock.className = "locked";
-      if (plan.pro) {
-        lock.textContent = "Достигнут лимит тарифа: " + plan.acc + " акк. на площадку.";
-      } else {
-        lock.innerHTML = "На Free — " + plan.acc + " аккаунт на площадку. ";
-        const a = document.createElement("a");
-        a.textContent = "Больше — в Pro ⭐";
-        a.onclick = scrollToPro;
-        lock.appendChild(a);
+    if (cfg.p === "youtube" && state.yt_on === false) {
+      group.appendChild(el("div", "note", "Подключение YouTube скоро будет доступно."));
+    } else if (plan.acc != null && items.length >= plan.acc) {
+      const note = el("div", "note");
+      if (plan.pro) note.textContent = "Достигнут лимит тарифа — " + plan.acc + " " + plural(plan.acc, ["аккаунт", "аккаунта", "аккаунтов"]) + ".";
+      else {
+        note.append("На Free — " + plan.acc + " аккаунт на площадку. ");
+        const a = el("a", null, "Больше в Pro ⭐"); a.onclick = () => { haptic(); openTab("plan"); };
+        note.appendChild(a);
       }
-      card.appendChild(lock);
-      return;
+      group.appendChild(note);
+    } else {
+      const add = el("button", "add-row"); add.type = "button";
+      add.append(el("div", "plus", "+"), el("span", null, cfg.p === "youtube" ? "Подключить канал" : "Подключить аккаунт"));
+      add.onclick = () => { haptic(); openSheet(cfg.p); };
+      group.appendChild(add);
     }
-    if (!items.length) { form.classList.add("open"); addBtn.style.display = "none"; }
-    addBtn.onclick = () => { form.classList.add("open"); addBtn.style.display = "none"; };
+    page.appendChild(group);
   });
+
+  // ---- шторка подключения ----
+  function closeSheet() { $("sheet").classList.remove("on"); $("scrim").classList.remove("on"); document.activeElement && document.activeElement.blur(); }
+  $("scrim").onclick = closeSheet;
+  if (tg && tg.BackButton) tg.BackButton.onClick(() => { closeSheet(); tg.BackButton.hide(); });
+
+  function sheetHead(p, title, sub) {
+    const h = el("h4"); const pi = el("div", "pi"); pi.innerHTML = ICON[p];
+    const wrap = el("div", "p-" + p); wrap.style.display = "contents"; wrap.appendChild(pi);
+    h.append(wrap, title);
+    return [h, el("p", null, sub)];
+  }
 
   function parseNick(text) {
     text = text.trim();
@@ -277,24 +342,81 @@
     return n ? n[1].toLowerCase() : null;
   }
 
-  document.getElementById("tt-btn").onclick = () => {
-    const nick = parseNick(document.getElementById("tt-nick").value);
-    const err = document.getElementById("tt-err");
-    if (!nick) { err.textContent = "Похоже, это не ник TikTok"; return; }
-    if ((state.tiktok || []).some(a => a.k === "tiktok:" + nick)) { err.textContent = "Этот аккаунт уже подключён"; return; }
-    err.textContent = "";
-    send({ a: "tt", nick });
-  };
+  function openSheet(p) {
+    const body = $("sheet-body"); body.innerHTML = "";
+    const err = el("div", "err");
+    const btn = el("button", "btn", "Подключить"); btn.type = "button";
+    if (p === "tiktok") {
+      body.append(...sheetHead(p, "TikTok", "Ник или ссылка на профиль. Пароль не нужен."));
+      const inp = el("input"); inp.placeholder = "@nickname"; inp.autocomplete = "off"; inp.autocapitalize = "off"; inp.spellcheck = false;
+      btn.onclick = () => {
+        const nick = parseNick(inp.value);
+        if (!nick) { err.textContent = "Похоже, это не ник TikTok"; haptic("heavy"); return; }
+        if ((state.tiktok || []).some(a => a.k === "tiktok:" + nick)) { err.textContent = "Этот аккаунт уже подключён"; return; }
+        send({ a: "tt", nick });
+      };
+      inp.onkeydown = (e) => { if (e.key === "Enter") btn.onclick(); };
+      body.append(inp, err, btn);
+      setTimeout(() => inp.focus(), 250);
+    } else if (p === "instagram") {
+      body.append(...sheetHead(p, "Instagram", "Нужен токен доступа профессионального аккаунта."));
+      const ta = el("textarea"); ta.placeholder = "Вставь токен доступа"; ta.spellcheck = false;
+      btn.onclick = () => {
+        const token = ta.value.trim().replace(/\s+/g, "");
+        if (token.length < 50) { err.textContent = "Токен слишком короткий — скопируй его целиком"; haptic("heavy"); return; }
+        send({ a: "ig", token });
+      };
+      const det = el("details");
+      det.innerHTML = '<summary>Где взять токен?</summary><ol>' +
+        '<li>Аккаунт Instagram — «Профессиональный» (Автор или Бизнес).</li>' +
+        '<li>Открой <a href="https://developers.facebook.com/apps" target="_blank">developers.facebook.com/apps</a> → создай приложение с «Instagram API».</li>' +
+        '<li>Instagram → «API setup with Instagram login» → добавь аккаунт.</li>' +
+        '<li>Нажми «Generate token», скопируй и вставь сюда.</li></ol>';
+      body.append(ta, err, btn, det);
+    } else {
+      body.append(...sheetHead(p, "YouTube", "Бот пришлёт ссылку и код: открой ссылку, войди в Google-аккаунт с нужным каналом и введи код."));
+      btn.textContent = "Войти через Google";
+      btn.onclick = () => send({ a: "yt" });
+      body.append(btn);
+    }
+    $("scrim").classList.add("on"); $("sheet").classList.add("on");
+    if (tg && tg.BackButton) tg.BackButton.show();
+  }
 
-  document.getElementById("ig-btn").onclick = () => {
-    const token = document.getElementById("ig-token").value.trim().replace(/\s+/g, "");
-    const err = document.getElementById("ig-err");
-    if (token.length < 50) { err.textContent = "Токен слишком короткий — скопируй его целиком"; return; }
-    err.textContent = "";
-    send({ a: "ig", token });
-  };
-
-  document.getElementById("yt-btn").onclick = () => send({ a: "yt" });
+  // ---- тариф ----
+  const accW = (n) => n + " " + plural(n, ["аккаунт", "аккаунта", "аккаунтов"]);
+  const fFeat = [
+    [true, plan.free_chk + " проверок TikTok-ников в день"],
+    [true, accW(plan.free_acc) + " на каждую площадку"],
+    [true, "тень, похожий контент, графики"],
+  ];
+  const pFeat = [
+    [true, plan.pro_chk + " проверок TikTok-ников в день"],
+    [true, "до " + accW(plan.pro_acc) + " на каждую площадку"],
+    [true, "тень, похожий контент, графики — по всем аккаунтам"],
+  ];
+  const fill = (ul, list) => list.forEach(([on, t]) => { const li = el("li", on ? "" : "off", t); $(ul).appendChild(li); });
+  fill("free-feat", fFeat); fill("pro-feat", pFeat);
+  $("pro-price").textContent = plan.price;
+  if (plan.pro) {
+    $("free-cur").style.display = "none"; $("pro-cur").style.display = "";
+    $("pro-small").textContent = plan.until ? "Активен до " + plan.until + ". Продление и отмена — в настройках Telegram." : "Активен.";
+  } else if (state.pay) {
+    $("pro-btn").style.display = ""; $("pro-btn").textContent = "Оформить Pro — " + plan.price + " ⭐";
+    $("pro-small").textContent = "Подписка продлевается раз в 30 дней. Отменить можно в любой момент в Telegram.";
+    $("pro-btn").onclick = () => {
+      haptic("medium");
+      if (!tg || !tg.openInvoice) { location.href = state.pay; return; }
+      tg.openInvoice(state.pay, status => {
+        if (status === "paid") {
+          try { tg.HapticFeedback.notificationOccurred("success"); } catch (e) {}
+          $("pro-btn").style.display = "none"; $("pro-ok").style.display = "";
+          setTimeout(() => tg.close(), 1600);
+        }
+      });
+    };
+  }
+  if (location.hash === "#pro") openTab("plan");
 </script>
 </body>
 </html>
