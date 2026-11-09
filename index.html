@@ -216,10 +216,22 @@
     return f[m10 === 1 && m100 !== 11 ? 0 : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? 1 : 2];
   }
 
+  const b64u = (s) => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  // Мини-апп на кнопке меню не умеет sendData — действие уходит боту ссылкой t.me/<бот>?start=…
+  function startArg(p) {
+    if (p.a === "tt") return "tt-" + b64u(p.nick);
+    if (p.a === "del") return "del-" + b64u(p.k);
+    return p.a;   // yt, ig, pro
+  }
   function send(payload) {
-    if (!tg || !tg.sendData) { alert("Открой это окно кнопкой «🔗 Аккаунты и Pro» в боте."); return; }
     haptic("medium");
-    tg.sendData(JSON.stringify(payload));   // окно закроется, бот получит данные
+    if (tg && state.bot) {
+      tg.openTelegramLink("https://t.me/" + state.bot + "?start=" + startArg(payload));
+      setTimeout(() => tg.close(), 300);
+      return;
+    }
+    if (tg && tg.sendData && payload.a !== "ig") { tg.sendData(JSON.stringify(payload)); return; }
+    alert("Открой это окно кнопкой «Аккаунты» в боте.");
   }
   function confirmThen(text, fn) {
     if (tg && tg.showConfirm) tg.showConfirm(text, ok => ok && fn());
@@ -359,20 +371,16 @@
       body.append(inp, err, btn);
       setTimeout(() => inp.focus(), 250);
     } else if (p === "instagram") {
-      body.append(...sheetHead(p, "Instagram", "Нужен токен доступа профессионального аккаунта."));
-      const ta = el("textarea"); ta.placeholder = "Вставь токен доступа"; ta.spellcheck = false;
-      btn.onclick = () => {
-        const token = ta.value.trim().replace(/\s+/g, "");
-        if (token.length < 50) { err.textContent = "Токен слишком короткий — скопируй его целиком"; haptic("heavy"); return; }
-        send({ a: "ig", token });
-      };
+      body.append(...sheetHead(p, "Instagram", "Нужен токен доступа профессионального аккаунта. Скопируй его, нажми кнопку и пришли токен боту сообщением — бот сразу удалит его из чата."));
+      btn.textContent = "Отправить токен боту";
+      btn.onclick = () => send({ a: "ig" });
       const det = el("details");
       det.innerHTML = '<summary>Где взять токен?</summary><ol>' +
         '<li>Аккаунт Instagram — «Профессиональный» (Автор или Бизнес).</li>' +
         '<li>Открой <a href="https://developers.facebook.com/apps" target="_blank">developers.facebook.com/apps</a> → создай приложение с «Instagram API».</li>' +
         '<li>Instagram → «API setup with Instagram login» → добавь аккаунт.</li>' +
         '<li>Нажми «Generate token», скопируй и вставь сюда.</li></ol>';
-      body.append(ta, err, btn, det);
+      body.append(btn, det);
     } else {
       body.append(...sheetHead(p, "YouTube", "Бот пришлёт ссылку и код: открой ссылку, войди в Google-аккаунт с нужным каналом и введи код."));
       btn.textContent = "Войти через Google";
