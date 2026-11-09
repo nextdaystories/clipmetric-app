@@ -123,6 +123,36 @@
   details { margin-top: 12px; font-size: 13px; color: var(--hint); }
   summary { color: var(--link); cursor: pointer; font-weight: 600; }
   details ol { padding-left: 18px; margin: 8px 0 0; } details li { margin: 4px 0; } details a { color: var(--link); }
+
+  /* админ */
+  .tabs { grid-auto-flow: column; grid-auto-columns: 1fr; grid-template-columns: none; }
+  .agrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
+  .acard { background: var(--card); border-radius: 16px; padding: 14px; min-width: 0; }
+  .acard .v { font-size: 24px; font-weight: 800; letter-spacing: -.4px; font-variant-numeric: tabular-nums; }
+  .acard .l { font-size: 12px; color: var(--hint); }
+  .acard .s { font-size: 12px; color: var(--hint); margin-top: 2px; }
+  .acard .s b { color: var(--up); font-weight: 700; }
+  .box { background: var(--card); border-radius: var(--r); padding: 14px; margin-bottom: 12px; }
+  .box h4 { margin: 0 0 10px; font-size: 15px; display: flex; justify-content: space-between; align-items: baseline; }
+  .box h4 span { font-size: 12px; font-weight: 500; color: var(--hint); }
+  .chart { display: flex; align-items: flex-end; gap: 4px; height: 110px; }
+  .chart .col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; min-width: 0; }
+  .chart .b { width: 100%; border-radius: 5px 5px 2px 2px; background: var(--accent); min-height: 2px; }
+  .chart .b.z { background: var(--soft); }
+  .chart .n { font-size: 10px; color: var(--hint); margin-bottom: 3px; font-variant-numeric: tabular-nums; }
+  .chart .d { font-size: 9px; color: var(--hint); margin-top: 4px; white-space: nowrap; }
+  .legend { display: flex; gap: 14px; font-size: 12px; color: var(--hint); margin-top: 8px; }
+  .seg { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+  .seg button { padding: 5px 10px; border-radius: 99px; background: var(--soft); font-size: 12px; font-weight: 600; color: var(--hint); }
+  .seg button.on { background: var(--accent); color: var(--accent-text); }
+  .urow { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+  .urow + .urow { border-top: 1px solid var(--line); }
+  .urow .ava { width: 38px; height: 38px; font-size: 15px; background: #6c7a96; }
+  .urow .r { text-align: right; flex: none; font-size: 12px; color: var(--hint); }
+  .tag { display: inline-block; font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 6px; margin-left: 6px; vertical-align: 2px;
+    background: var(--soft); color: var(--hint); }
+  .tag.P { background: linear-gradient(90deg, var(--gold1), var(--gold2)); color: #fff; }
+  .tag.A { background: color-mix(in srgb, var(--accent) 20%, transparent); color: var(--accent); }
 </style>
 </head>
 <body>
@@ -150,7 +180,24 @@
   <nav class="tabs">
     <button type="button" class="on" data-tab="acc">Аккаунты</button>
     <button type="button" data-tab="plan">Тариф</button>
+    <button type="button" data-tab="adm" id="tab-adm" style="display:none">Админ</button>
   </nav>
+
+  <div class="page" id="page-adm">
+    <div class="agrid" id="adm-kpi"></div>
+    <div class="box">
+      <h4>Активность за 14 дней <span id="adm-chart-mode"></span></h4>
+      <div class="seg" id="adm-chart-seg"></div>
+      <div class="chart" id="adm-chart"></div>
+    </div>
+    <div class="box">
+      <h4>Пользователи <span id="adm-ucount"></span></h4>
+      <input id="adm-q" placeholder="Поиск: имя, @username или id" autocomplete="off" spellcheck="false" style="margin-bottom:10px">
+      <div class="seg" id="adm-sort"></div>
+      <div id="adm-users"></div>
+    </div>
+    <div class="small" id="adm-ts"></div>
+  </div>
 
   <div class="page on" id="page-acc"></div>
 
@@ -278,6 +325,7 @@
     document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === name));
     $("page-acc").classList.toggle("on", name === "acc");
     $("page-plan").classList.toggle("on", name === "plan");
+    $("page-adm").classList.toggle("on", name === "adm");
   }
   document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => { haptic(); openTab(b.dataset.tab); });
 
@@ -424,6 +472,85 @@
       });
     };
   }
+  // ---- админ: пользователи и активность (только у админов бот кладёт state.adm) ----
+  const A = state.adm;
+  if (A) {
+    $("tab-adm").style.display = "";
+    const kpi = [
+      ["Пользователей", fmt(A.tot), "+" + A.new1 + " сегодня · +" + A.new7 + " за 7 дн."],
+      ["Активны сегодня", fmt(A.dau), "7 дн.: " + A.wau + " · 30 дн.: " + A.mau],
+      ["Сообщений сегодня", fmt(A.msg1), "7 дн.: " + fmt(A.msg7) + " · всего: " + fmt(A.msgT)],
+      ["Проверок ников", fmt(A.chk1), "за 7 дн.: " + fmt(A.chk7)],
+      ["Pro-подписок", fmt(A.pro), "аккаунтов подключено: " + fmt(A.acc)],
+      ["Заработано ⭐", fmt(A.stars), "за 30 дн.: " + fmt(A.stars30)],
+    ];
+    kpi.forEach(([l, v, s]) => {
+      const c = el("div", "acard");
+      c.append(el("div", "l", l), el("div", "v", v), el("div", "s", s));
+      $("adm-kpi").appendChild(c);
+    });
+
+    // график: день → [дата, активных, действий, проверок, новых]
+    const MODES = [["Активные", 1], ["Действия", 2], ["Новые", 4], ["Проверки", 3]];
+    let mode = 1;
+    function drawChart() {
+      const ch = $("adm-chart"); ch.innerHTML = "";
+      const max = Math.max(1, ...A.days.map(d => d[mode]));
+      A.days.forEach(d => {
+        const col = el("div", "col");
+        const v = d[mode];
+        col.appendChild(el("div", "n", v ? fmt(v) : ""));
+        const b = el("div", "b" + (v ? "" : " z")); b.style.height = Math.max(2, v / max * 80) + "px";
+        col.append(b, el("div", "d", d[0].slice(0, 2)));
+        ch.appendChild(col);
+      });
+      $("adm-chart-mode").textContent = A.days[0][0] + " – " + A.days[A.days.length - 1][0];
+      document.querySelectorAll("#adm-chart-seg button").forEach(b => b.classList.toggle("on", +b.dataset.m === mode));
+    }
+    MODES.forEach(([t, m]) => {
+      const b = el("button", null, t); b.type = "button"; b.dataset.m = m;
+      b.onclick = () => { haptic(); mode = m; drawChart(); };
+      $("adm-chart-seg").appendChild(b);
+    });
+    drawChart();
+
+    // список пользователей
+    const SORTS = [["Недавние", null], ["Сообщения", "m"], ["За 7 дней", "w"], ["Проверки", "c"]];
+    let sortKey = null;
+    const seenKey = (u) => u.s ? u.s.slice(3, 5) + u.s.slice(0, 2) + u.s.slice(6) : "";  // дд.мм чч:мм → ммдд чч:мм
+    function drawUsers() {
+      const q = $("adm-q").value.trim().toLowerCase().replace(/^@/, "");
+      let list = A.users.filter(u => !q || (u.n + " " + u.u + " " + u.id).toLowerCase().includes(q));
+      list = list.slice().sort((a, b) => sortKey ? b[sortKey] - a[sortKey] : seenKey(b).localeCompare(seenKey(a)));
+      const box = $("adm-users"); box.innerHTML = "";
+      list.forEach(u => {
+        const row = el("div", "urow");
+        const ava = el("div", "ava", (u.n || "?").replace(/^@/, "").slice(0, 1));
+        const info = el("div", "info");
+        const nm = el("div", "nm", u.n);
+        nm.appendChild(el("span", "tag " + u.p, { A: "админ", P: "Pro", F: "Free" }[u.p]));
+        info.appendChild(nm);
+        info.appendChild(el("div", "meta", (u.u ? "@" + u.u + " · " : "") + "💬 " + u.m + " · 👆 " + u.k + " · 🔎 " + u.c + (u.a ? " · 🔗 " + u.a : "")));
+        const r = el("div", "r");
+        r.append(el("div", null, u.s || "—"), el("div", null, "с " + (u.j || "—")));
+        row.append(ava, info, r);
+        if (u.u) row.onclick = () => { if (tg && tg.openTelegramLink) tg.openTelegramLink("https://t.me/" + u.u); };
+        box.appendChild(row);
+      });
+      if (!list.length) box.appendChild(el("div", "note", "Никого не нашёл"));
+      $("adm-ucount").textContent = A.tot > A.users.length ? "последние " + A.users.length + " из " + A.tot : A.tot;
+      document.querySelectorAll("#adm-sort button").forEach(b => b.classList.toggle("on", (b.dataset.k || null) === sortKey));
+    }
+    SORTS.forEach(([t, k]) => {
+      const b = el("button", null, t); b.type = "button"; if (k) b.dataset.k = k;
+      b.onclick = () => { haptic(); sortKey = k; drawUsers(); };
+      $("adm-sort").appendChild(b);
+    });
+    $("adm-q").oninput = drawUsers;
+    drawUsers();
+    $("adm-ts").textContent = "Данные на " + A.ts + " · обновляются раз в 5 минут. 💬 сообщения · 👆 нажатия кнопок · 🔎 проверки ников · 🔗 аккаунты";
+  }
+
   if (location.hash === "#pro") openTab("plan");
 </script>
 </body>
